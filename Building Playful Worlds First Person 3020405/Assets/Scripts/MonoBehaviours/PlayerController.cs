@@ -113,6 +113,8 @@ public class PlayerController : MonoBehaviour {
     private Vector3 move;
     private Vector2 originalSize;
     private List<EnemyToken> enemies;
+    private float exitTimer;
+    private bool exittable = false;
     #endregion
 
     private void Start()
@@ -135,6 +137,7 @@ public class PlayerController : MonoBehaviour {
         originalColY = playerCol.center.y;
         QueryAllEnemies();
         Respawn();
+        StartCoroutine(FadeBlackScreen(0));
     }
 
     private void OnApplicationFocus(bool focus)
@@ -194,6 +197,24 @@ public class PlayerController : MonoBehaviour {
 
         health = Mathf.Clamp(health, 0, maxHealth);
         anim.SetBool("Unarmed", disableMovement);
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!exittable)
+            {
+                UITextHandler.LogText("Press escape again to return to the menu.");
+                exitTimer = Time.time + 2;
+                exittable = true;
+            }
+            else
+            {
+                SceneManager.LoadScene("MainMenu");
+            }
+        }
+        if (Time.time > exitTimer)
+        {
+            exittable = false;
+        }
     }
 
     private void Move()

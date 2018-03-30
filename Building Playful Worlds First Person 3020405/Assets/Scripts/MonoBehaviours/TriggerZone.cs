@@ -35,4 +35,11 @@ public class TriggerZone : MonoBehaviour {
             onTrigger.Invoke();
         }
     }
+
+    //For when there are multiple trigger zones for one single event
+    public void Destroy()
+    {
+        Destroy(this);
+    }
+
 }

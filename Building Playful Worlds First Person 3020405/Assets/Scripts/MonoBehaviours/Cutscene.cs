@@ -7,12 +7,17 @@ public class Cutscene : MonoBehaviour {
     public Transform cam;
     public Transform cam2;
     public Transform[] camWaypoints;
+    public Transform playerLookTarget;
     public GameObject laserBundle;
     public AudioClip laserShutdownClip;
     public AudioClip tension1;
+    public AudioClip tension2;
+    public AudioSource escapePodSource;
+    public Light engineLight;
 
     private MusicHandler music;
     private PlayerController player;
+    private float catchTimer;   //Used in Scene3 when player Rotation aligning doesn't work correctly.
 
     private void Start()
     {
@@ -85,7 +90,48 @@ public class Cutscene : MonoBehaviour {
 
     private IEnumerator Scene3()
     {
-        yield break;
+        catchTimer = Time.time + 5;
+        if (music.currentPlayingSource == 2)
+        {
+            music.audioSources[0].clip = tension2;
+            music.SwitchAudio(0, 4);
+        }
+        else
+        {
+            music.audioSources[1].clip = tension2;
+            music.SwitchAudio(1, 4);
+        }
+        Debug.Log(catchTimer + ", " + Time.time);
+        player.disableMovement = true;
+        player.enabled = false;
+        UITextHandler.LogText("I'm activating the pod's engines. We'll be out of here in no time.", 1f);
+        escapePodSource.Play();
+        while (player.transform.rotation != playerLookTarget.rotation)
+        {
+            player.transform.rotation = Quaternion.Slerp(player.transform.localRotation, playerLookTarget.localRotation, Time.deltaTime);
+            if (engineLight.intensity < 4)
+                engineLight.intensity += 0.03f;
+            if (Time.time > catchTimer)
+            {
+                player.transform.rotation = playerLookTarget.rotation;
+            }
+            yield return null;
+        }
+        player.ShakeScreen(10, 0.5f);
+        yield return new WaitForSeconds(1);
+        player.ShakeScreen(10, 1f);
+        yield return StartCoroutine(player.FadeBlackScreen(1));
+        yield return new WaitForSeconds(5);
+        while (music.audioSources[music.currentPlayingSource - 1].volume > 0)
+        {
+            Debug.Log(music.audioSources[music.currentPlayingSource - 1].volume);
+            music.audioSources[music.currentPlayingSource - 1].volume = Mathf.MoveTowards(music.audioSources[music.currentPlayingSource - 1].volume, 0, Time.deltaTime / 5);
+            yield return null;
+        }
+        yield return new WaitForSeconds(1);
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("EndingScreen");
     }
 
 }
